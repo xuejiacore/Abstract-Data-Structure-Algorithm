@@ -34,9 +34,9 @@ class TreeNode(object):
         desc = color_format('data=>{}, '.format(self.data), fore='cyan', mode='bold') + \
                color_format('parent.data=>{}, '.format(self.parent.data if self.parent else None),
                             fore='yellow', mode='bold') + \
-               color_format('l_child.data=>{}, '.format(self.l_child.data if self.l_child else None),
+               color_format('[l_child.data=>{}, '.format(self.l_child.data if self.l_child else None),
                             fore='yellow', mode='bold') + \
-               color_format('r_child.data=>{}'.format(self.r_child.data if self.r_child else None),
+               color_format('r_child.data=>{}]'.format(self.r_child.data if self.r_child else None),
                             fore='purple', mode='bold')
 
         return '{} --> name: {}, tag: {}'.format(desc, self.name, self.tag)
