@@ -11,12 +11,11 @@ class TreeNode(object):
     The abstract data structure of tree node.
     """
 
-    def __init__(self, data, name=None, children=None):
+    def __init__(self, data, name=None):
         """
         To initializing a tree node.
         :param data: the data of tree node
         :param name: the name of tree node
-        :param children: the children of the current node
         :return: the instance of tree node
         """
         # The data of the node.
@@ -49,7 +48,14 @@ class BinaryTreeNode(TreeNode):
     """
 
     def __init__(self, data, name=None, children=None):
-        super().__init__(data, name, children)
+        """
+        Initialize a tree node.
+        :param data: Value of current node.
+        :param name: Name of current node.
+        :param children: Child of current node.
+        :return:
+        """
+        super().__init__(data, name)
         if children and isinstance(children, collections.Iterable):
             for d in children:
                 self.insert(d)
@@ -91,32 +97,35 @@ class BinaryTreeNode(TreeNode):
         """
         if not (data or node):
             node = self
+
         search_node = self.search(data) if data else node
+
         if not search_node:
-            # 如果删除的数据不在树结构中，返回None
+            # Will return none if the value is not exist.
             return None
         del_data = search_node.data
         if search_node.is_leaf():
-            # 如果当前节点是叶子节点，删除当前节点，对应设置父节点的左右子节点为None
+            # Delete the current node which node is leaf, and then make it's parent as none.
             if search_node.is_left_child():
                 search_node.parent.l_child = None
             else:
                 search_node.parent.r_child = None
             del search_node
+
         elif search_node.l_child and search_node.r_child:
-            # 拥有左右两个子树的情况:先删除后继节点（肯定没有左节点），替换删除的值为后继节点的值
+            # Delete it's successor (must not exist left-child), and then replace the value that want to delete.
             successor_node = search_node.successor()
             search_node.data = successor_node.remove(node=successor_node)
         elif search_node.l_child and not search_node.r_child:
-            # 只有左子树的情况
+            # Only left subtree
             if search_node.is_left_child():
                 search_node.parent.l_child = search_node.l_child
             else:
                 search_node.parent.r_child = search_node.l_child
-            # 关联父子节点
+            # Associate
             search_node.l_child.parent = search_node.parent
         elif search_node.r_child and not search_node.l_child:
-            # 只有右子树的情况
+            # Only right subtree
             if search_node.is_right_child():
                 search_node.parent.r_child = search_node.r_child
             else:
@@ -131,19 +140,19 @@ class BinaryTreeNode(TreeNode):
         :return: will return the node if found it otherwise will be none
         """
         if data == self.data:
-            # 查找到数据，返回当前节点
+            # Found the data and return.
             self.tag = 'search'
             return self
         elif self.l_child and data < self.data:
-            # 数据小于当前节点，继续查找左子树(如果左子树存在)
+            # The data is lower than the current node, to find the left subtree (if the left subtree exists)
             self.tag = 'search'
             return self.l_child.search(data)
         elif self.r_child and data > self.data:
-            # 数据大于当前节点，继续查找右子树(如果右子树存在)
+            # The data is greater than the current node, to find the right subtree (if the right subtree exists)
             self.tag = 'search'
             return self.r_child.search(data)
         else:
-            # 没有找到节点，返回None
+            # Node not found, return None
             return None
 
     def max(self, ignore_right=False):
@@ -190,7 +199,6 @@ class BinaryTreeNode(TreeNode):
         :return: the depth of the tree
         """
         if not (self.l_child or self.r_child):
-            # 如果只有根节点，返回深度为1
             return 1
         if self.l_child and self.r_child:
             return 1 + max(self.l_child.depth(), self.r_child.depth())
@@ -205,20 +213,22 @@ class BinaryTreeNode(TreeNode):
         :return: the predecessor node while current node exist, otherwise, will be none
         """
         if self.l_child:
-            # 如果当前节点含有左子树，那么其中序遍历的前驱是左子树中关键字值最大的那个节点
+            # If the current node contains the left child tree,
+            # the predecessor of the sequence traversal is the largest one in the left tree.
             p_node = self.l_child.max()
             p_node.tag = 'predecessor'
             return p_node
         else:
             if self.is_left_child():
-                # 如果当前节点是左节点，那么一直迭代回溯父节点，直到某个父节点是右节点的身份
+                # If the current node is left, it always has to go back to the parent node,
+                # until a parent node is the right one.
                 current_node = self
                 while current_node.is_left_child():
                     current_node = current_node.parent
                 current_node.tag = 'predecessor'
                 return None if current_node.is_root() else current_node
             else:
-                # 如果当前节点是右节点，那么其父节点就是当前节点的前驱
+                # If the current node is the right node, the parent node is the precursor of the current node.
                 self.tag = 'predecessor'
                 return self.parent
 
@@ -233,7 +243,8 @@ class BinaryTreeNode(TreeNode):
             return s_node
         else:
             if self.is_right_child():
-                # 如果当前节点是右节点，那么一直迭代回溯父节点，知道父节点的身份是左节点
+                # If the current node is the right node, it has been an iterative backtracking parent node,
+                # knowing that the identity of the parent node is left.
                 current_node = self
                 while current_node.is_right_child():
                     current_node = current_node.parent
@@ -242,7 +253,7 @@ class BinaryTreeNode(TreeNode):
                 current_node.parent.tag = 'successor'
                 return current_node.parent
             else:
-                # 如果当前节点是左节点，那么其父节点就是当前节点的后继节点
+                # If the current node is left node, the parent node is the successor node of the current node.
                 self.parent.tag = 'successor'
                 return self.parent
 
@@ -255,7 +266,6 @@ class BinaryTreeNode(TreeNode):
 
     def is_right_child(self):
         """
-        判断当前节点是父节点的右节点
         To determine whether current node is right-child related by it's parent.
         :return: will return True if it is, otherwise, will be False
         """
@@ -303,7 +313,7 @@ class BinaryTreeNode(TreeNode):
 
 
 if __name__ == '__main__':
-    rootNode = BinaryTreeNode(15, 'root', children=[6, 3, 2, 4, 7, 13, 18, 16, 20])
+    rootNode = BinaryTreeNode(15, name='root', children=[6, 3, 2, 4, 7, 13, 18, 16, 20])
     # rootNode.insert(6)
     # rootNode.insert(3)
     # rootNode.insert(2)
