@@ -116,9 +116,7 @@ class B23TreeNode(B3TreeNode):
                 # 二节点类型，直接进行数据的插入
                 if h_node.data < self.data:
                     # 作为左值
-                    # self.data2, self.data = self.data, h_node.data
-                    self.data2 = self.data
-                    self.data = h_node.data
+                    self.data, self.data2 = h_node.data, self.data
                 elif h_node.data > self.data:
                     # 作为右值
                     self.data2 = h_node.data
@@ -170,47 +168,77 @@ class B23TreeNode(B3TreeNode):
                         self.parent.m_child = h_node
                         # 修改当前节点的节点值，转化为2-Node
                         self.data, self.data2 = self.data2, None
+                        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                     elif position == 1:
                         # 将破坏节点挂在当前节点的父节点，作为父节点的中子树
                         h_node.parent = self.parent
                         self.parent.m_child = h_node
                         # 修改当前节点的节点值，转化为2-Node
                         self.data2 = None
+                        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                     else:
                         # 破坏节点是中间，将当前3-Node拆分为两个节点，利用h_node作为另外一个节点
-                        # 创造一个新的节点，使其指向父节点
-                        if self.parent.is_3_node():
-                            next_h_node = B23TreeNode(next_h_data)
-                            next_h_node.l_child = self
-                            next_h_node.parent = self.parent
-                            self.parent.l_child = next_h_node
-                            real_parent = self.parent
-                            self.parent = next_h_node
-                            h_node.parent = next_h_node
-                        else:
-                            h_node.parent = self.parent
 
                         if self.data2 < real_parent.data:
-                            # 当前节点在父节点的左端
-                            self.parent.r_child = h_node
+                            # 创造一个新的节点，使其指向父节点
+                            if self.parent.is_3_node():
+                                next_h_node = B23TreeNode(next_h_data)
+                                next_h_node.l_child = self
+                                next_h_node.parent = self.parent
+                                self.parent.l_child = next_h_node
+                                real_parent = self.parent
+                                self.parent = next_h_node
+                                h_node.parent = next_h_node
+                            else:
+                                h_node.parent = self.parent
+                                self.parent.m_child = h_node
+                        elif self.data > real_parent.data:
+                            if self.parent.is_3_node():
+                                next_h_node = B23TreeNode(next_h_data)
+                                next_h_node.l_child = self
+                                next_h_node.parent = self.parent
+                                self.parent.r_child = next_h_node
+                                real_parent = self.parent
+                                self.parent = next_h_node
+                                h_node.parent = next_h_node
+                            else:
+                                # 二节点
+                                pass
+
+                        if self.data2 < real_parent.data:
+
+                            # TODO:3-Node在父节点的左端
                             if next_h_node:
+                                # 当前节点在父节点的左端
+                                self.parent.r_child = h_node
                                 next_h_node.data = h_node.data
                                 h_node.data = self.data2
                             else:
                                 h_node.data = self.data2
+                                # 设置当前节点的右值为空
+                            self.data2 = None
                         elif self.data > real_parent.data:
-                            # 当前节点在父节点的右端
-                            self.parent.m_child = self
-                            self.parent.r_child = h_node
-                            h_node.data = self.data2
-                        # 设置当前节点的右值为空
-                        self.data2 = None
+                            # TODO:3-Node在父节点的右端
+
+                            if next_h_node:
+                                # 当前节点在父节点的左端
+                                self.parent.l_child = h_node
+                                next_h_node.data = h_node.data
+                                h_node.data = self.data
+                            else:
+                                h_node.data = self.data2
+                                # 设置当前节点的右值为空
+                            self.data, self.data2 = self.data2, None
+                            pass
 
                 if real_parent:
                     # TODO:判断父节点的类型，根据类型，对父节点进行提升
-                    if real_parent.is_2_node():
+                    if real_parent.is_2_node() and next_h_data:
                         # TODO:父节点是2-Node
-                        real_parent.data2 = next_h_data
+                        if next_h_data > real_parent.data:
+                            real_parent.data2 = next_h_data
+                        else:
+                            real_parent.data, real_parent.data2 = next_h_data, real_parent.data
                     else:
                         # TODO:父节点是3-Node，继续拆分父节点
                         real_parent.deformation(harmful_data=None, harmful_node=next_h_node, name=name, from_child=True)
@@ -265,8 +293,7 @@ if __name__ == '__main__':
     # b23nd = B23TreeNode(77, children=[69, 74, 82, 65, 67, 72, 76, 80, 83, 88])
     # b23nd = B23TreeNode(77, 'root')
 
-    b23nd = B23TreeNode(77, name='root', children=[82, 78, 74, 90, 85, 81, 89, 75, 60])
-    print("search: {}".format(b23nd.search(82)[0]))
+    b23nd = B23TreeNode(77, name='root', children=[82, 78, 74, 90, 85, 80, 88, 75, 60, 65])
     # b23nd = B23TreeNode(77, name='root', children=[82, 78, 74, 90, 85, 81, 88, 89])u
     # b23nd.insert(69)
     # b23nd.insert(74)
@@ -280,10 +307,11 @@ if __name__ == '__main__':
     # b23nd.insert(74)
     print(b23nd)
     print(b23nd.l_child)
-    #
+    print(b23nd.l_child.l_child)
     print(b23nd.m_child)
     print(b23nd.r_child)
-    print(b23nd.r_child.l_child)
+
+
 
     # print([i for i in b23nd.middle_order_traversal()])
     #
