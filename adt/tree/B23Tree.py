@@ -20,23 +20,28 @@ class B3TreeNode(TreeNode):
         self.m_child = None
 
     def __str__(self):
+        l_child_r_data = 'l_child.r_data=>{}| '.format(
+                self.l_child.data2 if self.l_child.data2 else '') if self.l_child and self.l_child.data2 else ''
+        m_child_r_data = 'm_child.r_data=>{}| '.format(
+                self.m_child.data2 if self.m_child.data2 else '') if self.m_child and self.m_child.data2 else ''
+        r_child_r_data = 'r_child.r_data=>{}| '.format(
+                self.r_child.data2 if self.r_child.data2 else '') if self.r_child and self.r_child.data2 else ''
+
         desc = color_format(
                 '[l_data=>{}{}] '.format(self.data, ', r_data=>{}'.format(self.data2) if self.data2 else ''),
-                fore='red', mode='bold') + \
-               color_format('parent.data=>{}, '.format(self.parent.data if self.parent else None),
-                            fore='yellow', mode='bold') + \
-               color_format('[l_child.l_data=>{}, {}'.format(self.l_child.data if self.l_child else None,
-                                                             'l_child.r_data=>{}| '.format(
-                                                                     self.l_child.data2 if self.l_child.data2 else '') if self.l_child and self.l_child.data2 else ''),
-                            fore='cyan', mode='bold') + \
-               color_format('m_child.l_data=>{}, {}'.format(self.m_child.data if self.m_child else None,
-                                                            'm_child.r_data=>{}| '.format(
-                                                                    self.m_child.data2 if self.m_child.data2 else '') if self.m_child and self.m_child.data2 else ''),
-                            fore='blue', mode='bold') + \
-               color_format('r_child.l_data=>{}, {}'.format(self.r_child.data if self.r_child else None,
-                                                            'r_child.r_data=>{}| '.format(
-                                                                    self.r_child.data2 if self.r_child.data2 else '') if self.r_child and self.r_child.data2 else ''),
-                            fore='purple', mode='bold')
+                fore='red', mode='bold') + color_format(
+                'parent.data=>{}, '.format(self.parent.data if self.parent else None),
+                fore='yellow', mode='bold') + color_format(
+
+                '[l_child.l_data=>{}, {}'.format(self.l_child.data if self.l_child else None, l_child_r_data),
+                fore='cyan',
+                mode='bold') + color_format(
+                'm_child.l_data=>{}, {}'.format(self.m_child.data if self.m_child else None, m_child_r_data),
+                fore='blue',
+                mode='bold') + color_format(
+                'r_child.l_data=>{}, {}'.format(self.r_child.data if self.r_child else None, r_child_r_data),
+                fore='purple',
+                mode='bold')
 
         return '{} --> Name: {}, Tag: {}'.format(desc, color_format(self.name, mode='bold',
                                                                     fore='red') if self.name else None, self.tag)
@@ -117,9 +122,17 @@ class B23TreeNode(B3TreeNode):
                 if h_node.data < self.data:
                     # 作为左值
                     self.data, self.data2 = h_node.data, self.data
+                    if h_node.l_child:
+                        self.l_child = h_node.l_child
+                    if h_node.r_child:
+                        self.m_child = h_node.r_child
                 elif h_node.data > self.data:
                     # 作为右值
                     self.data2 = h_node.data
+                    if h_node.r_child:
+                        self.r_child = h_node.r_child
+                    if h_node.l_child:
+                        self.m_child = h_node.l_child
                 else:
                     # 数据冲突，返回失败
                     return False
@@ -161,25 +174,41 @@ class B23TreeNode(B3TreeNode):
                         self.l_child, self.r_child = cut_l_node, cut_r_node
                         self.data2, self.data = None, h_node.data
 
-                elif self.is_leaf():
+                elif from_child or self.is_leaf():
                     if position == -1:
                         # 将破坏节点挂在当前节点的父节点，作为父节点的中子树
-                        h_node.parent = self.parent
-                        self.parent.m_child = h_node
-                        # 修改当前节点的节点值，转化为2-Node
+                        # 当前节点的左值是将要上升到父节点的下一个值
+                        next_h_node = B23TreeNode(self.data)
+                        next_h_node.parent = self.parent
+
+                        next_h_node.l_child = h_node
+                        next_h_node.r_child = self
+
+                        real_parent = self.parent
+                        self.l_child, self.m_child = self.m_child, None
                         self.data, self.data2 = self.data2, None
-                        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                        # 重新挂到新的父节点中
+                        h_node.parent = self.parent = next_h_node
+
+                        # h_node.parent = self.parent
+                        # next_h_node = B23TreeNode(self.data)
+                        # self.parent.l_child = h_node
+                        # self.parent.m_child = self
+                        # 修改当前节点的节点值，转化为2-Node
+                        # self.data, self.data2 = self.data2, None
+                        print("左端提升")
                     elif position == 1:
                         # 将破坏节点挂在当前节点的父节点，作为父节点的中子树
                         h_node.parent = self.parent
                         self.parent.m_child = h_node
                         # 修改当前节点的节点值，转化为2-Node
                         self.data2 = None
+                        # 左端提升
                         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                     else:
                         # 破坏节点是中间，将当前3-Node拆分为两个节点，利用h_node作为另外一个节点
 
-                        if self.data2 < real_parent.data:
+                        if self.data2 < self.parent.data:
                             # 创造一个新的节点，使其指向父节点
                             if self.parent.is_3_node():
                                 next_h_node = B23TreeNode(next_h_data)
@@ -192,7 +221,7 @@ class B23TreeNode(B3TreeNode):
                             else:
                                 h_node.parent = self.parent
                                 self.parent.m_child = h_node
-                        elif self.data > real_parent.data:
+                        elif self.data > self.parent.data:
                             if self.parent.is_3_node():
                                 next_h_node = B23TreeNode(next_h_data)
                                 next_h_node.l_child = self
@@ -206,7 +235,6 @@ class B23TreeNode(B3TreeNode):
                                 pass
 
                         if self.data2 < real_parent.data:
-
                             # TODO:3-Node在父节点的左端
                             if next_h_node:
                                 # 当前节点在父节点的左端
@@ -219,7 +247,6 @@ class B23TreeNode(B3TreeNode):
                             self.data2 = None
                         elif self.data > real_parent.data:
                             # TODO:3-Node在父节点的右端
-
                             if next_h_node:
                                 # 当前节点在父节点的左端
                                 self.parent.l_child = h_node
@@ -233,13 +260,15 @@ class B23TreeNode(B3TreeNode):
 
                 if real_parent:
                     # TODO:判断父节点的类型，根据类型，对父节点进行提升
-                    if real_parent.is_2_node() and next_h_data:
+                    if real_parent.is_root() and next_h_node:
+                        real_parent.deformation(harmful_node=next_h_node, from_child=True)
+                    elif real_parent.is_2_node() and next_h_data:
                         # TODO:父节点是2-Node
                         if next_h_data > real_parent.data:
                             real_parent.data2 = next_h_data
                         else:
                             real_parent.data, real_parent.data2 = next_h_data, real_parent.data
-                    else:
+                    elif real_parent.is_3_node():
                         # TODO:父节点是3-Node，继续拆分父节点
                         real_parent.deformation(harmful_data=None, harmful_node=next_h_node, name=name, from_child=True)
                         pass
@@ -287,13 +316,14 @@ if __name__ == '__main__':
     # 根节点插入右值
     # b23nd = B23TreeNode(77, children=[79])
 
-    # 根2-节点插入新值，l
-    # b23nd = B23TreeNode(77, name='root', children=[69, 74, 82, 65, 67, 72, 76])
+    # 三层树结构
+    # b23nd = B23TreeNode(77, name='root', children=[88, 78, 75, 90, 76, 72, 73])
+    b23nd = B23TreeNode(77, name='root', children=[88, 78, 75, 90, 76, 72, 73, 70, 71, 68, 69])
 
     # b23nd = B23TreeNode(77, children=[69, 74, 82, 65, 67, 72, 76, 80, 83, 88])
     # b23nd = B23TreeNode(77, 'root')
 
-    b23nd = B23TreeNode(77, name='root', children=[82, 78, 74, 90, 85, 80, 88, 75, 60, 65])
+    # b23nd = B23TreeNode(77, name='root', children=[82, 78, 74, 90, 85, 80, 88, 75, 60, 65])
     # b23nd = B23TreeNode(77, name='root', children=[82, 78, 74, 90, 85, 81, 88, 89])u
     # b23nd.insert(69)
     # b23nd.insert(74)
@@ -306,14 +336,11 @@ if __name__ == '__main__':
     # b23nd.insert(82)
     # b23nd.insert(74)
     print(b23nd)
-    print(b23nd.l_child)
-    print(b23nd.l_child.l_child)
-    print(b23nd.m_child)
-    print(b23nd.r_child)
+    print("root.left:{}".format(b23nd.l_child))
+    print("root.middle:{}".format(b23nd.m_child))
+    print("root.right{}".format(b23nd.r_child))
 
-
-
-    # print([i for i in b23nd.middle_order_traversal()])
+    print([i for i in b23nd.middle_order_traversal()])
     #
     # for node in b23nd.middle_order_traversal(generate_tn=True):
     #     print(node)
